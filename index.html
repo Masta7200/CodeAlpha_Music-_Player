@@ -1,0 +1,240 @@
+Simple JavaScript Music Player
+Preview
+Code
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Music Player</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .player {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            text-align: center;
+            width: 300px;
+        }
+        .player h2 {
+            margin-top: 0;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .controls button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            margin: 0 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .controls button:hover {
+            background-color: #45a049;
+        }
+        .progress {
+            width: 100%;
+            height: 5px;
+            background-color: #ddd;
+            margin-top: 20px;
+            position: relative;
+            cursor: pointer;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 0;
+        }
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 12px;
+        }
+        .volume-control {
+            margin-top: 20px;
+        }
+        .volume-control input {
+            width: 100%;
+        }
+        .playlist {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .playlist-item {
+            padding: 5px;
+            cursor: pointer;
+        }
+        .playlist-item:hover {
+            background-color: #f0f0f0;
+        }
+        .playlist-item.active {
+            background-color: #e0e0e0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="player">
+        <h2>Music Player</h2>
+        <div id="song-info">
+            <p>Now Playing: <span id="song-name">No song selected</span></p>
+        </div>
+        <audio id="audio-player"></audio>
+        <div class="controls">
+            <button id="prev-btn">⏮</button>
+            <button id="play-pause-btn">▶</button>
+            <button id="next-btn">⏭</button>
+        </div>
+        <div class="progress" id="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="time-display">
+            <span id="current-time">0:00</span>
+            <span id="duration">0:00</span>
+        </div>
+        <div class="volume-control">
+            <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="1">
+        </div>
+        <div class="playlist" id="playlist"></div>
+    </div>
+
+    <script>
+        const audioPlayer = document.getElementById('audio-player');
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const songName = document.getElementById('song-name');
+        const progressBar = document.getElementById('progress-bar');
+        const progressContainer = document.getElementById('progress-container');
+        const currentTimeEl = document.getElementById('current-time');
+        const durationEl = document.getElementById('duration');
+        const volumeSlider = document.getElementById('volume-slider');
+        const playlistContainer = document.getElementById('playlist');
+
+        const playlist = [
+            { name: "Song 1", src: "/api/placeholder/audio/1" },
+            { name: "Song 2", src: "/api/placeholder/audio/2" },
+            { name: "Song 3", src: "/api/placeholder/audio/3" }
+        ];
+
+        let currentSongIndex = 0;
+
+        function loadSong(index) {
+            const song = playlist[index];
+            audioPlayer.src = song.src;
+            songName.textContent = song.name;
+            updatePlaylistUI();
+        }
+
+        function updatePlaylistUI() {
+            playlistContainer.innerHTML = '';
+            playlist.forEach((song, index) => {
+                const div = document.createElement('div');
+                div.classList.add('playlist-item');
+                if (index === currentSongIndex) {
+                    div.classList.add('active');
+                }
+                div.textContent = song.name;
+                div.addEventListener('click', () => {
+                    currentSongIndex = index;
+                    loadSong(currentSongIndex);
+                    playSong();
+                });
+                playlistContainer.appendChild(div);
+            });
+        }
+
+        function playSong() {
+            audioPlayer.play();
+            playPauseBtn.textContent = '⏸';
+        }
+
+        function pauseSong() {
+            audioPlayer.pause();
+            playPauseBtn.textContent = '▶';
+        }
+
+        function nextSong() {
+            currentSongIndex = (currentSongIndex + 1) % playlist.length;
+            loadSong(currentSongIndex);
+            playSong();
+        }
+
+        function prevSong() {
+            currentSongIndex = (currentSongIndex - 1 + playlist.length) % playlist.length;
+            loadSong(currentSongIndex);
+            playSong();
+        }
+
+        function updateProgress(e) {
+            const { duration, currentTime } = e.srcElement;
+            const progressPercent = (currentTime / duration) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+
+            const durationMinutes = Math.floor(duration / 60);
+            let durationSeconds = Math.floor(duration % 60);
+            if (durationSeconds < 10) {
+                durationSeconds = `0${durationSeconds}`;
+            }
+            if (duration) {
+                durationEl.textContent = `${durationMinutes}:${durationSeconds}`;
+            }
+
+            const currentMinutes = Math.floor(currentTime / 60);
+            let currentSeconds = Math.floor(currentTime % 60);
+            if (currentSeconds < 10) {
+                currentSeconds = `0${currentSeconds}`;
+            }
+            currentTimeEl.textContent = `${currentMinutes}:${currentSeconds}`;
+        }
+
+        function setProgress(e) {
+            const width = this.clientWidth;
+            const clickX = e.offsetX;
+            const duration = audioPlayer.duration;
+            audioPlayer.currentTime = (clickX / width) * duration;
+        }
+
+        playPauseBtn.addEventListener('click', () => {
+            const isPlaying = playPauseBtn.textContent === '⏸';
+            if (isPlaying) {
+                pauseSong();
+            } else {
+                playSong();
+            }
+        });
+
+        nextBtn.addEventListener('click', nextSong);
+        prevBtn.addEventListener('click', prevSong);
+
+        audioPlayer.addEventListener('timeupdate', updateProgress);
+        audioPlayer.addEventListener('ended', nextSong);
+
+        progressContainer.addEventListener('click', setProgress);
+
+        volumeSlider.addEventListener('change', (e) => {
+            audioPlayer.volume = e.target.value;
+        });
+
+        // Initialize the player
+        loadSong(currentSongIndex);
+        updatePlaylistUI();
+    </script>
+</body>
+</html>
